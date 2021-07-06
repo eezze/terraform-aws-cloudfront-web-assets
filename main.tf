@@ -1,7 +1,7 @@
 locals {
   resource_name_prefix = "${var.environment}-${var.resource_tag_name}"
-  origin_domain_name   = var.website == true ? join("", aws_s3_bucket.website.*.bucket_regional_domain_name) : join("", aws_s3_bucket.assets.*.bucket_regional_domain_name)
-  s3_bucket_arn        = var.website == true ? join("", aws_s3_bucket.website.*.arn) : join("", aws_s3_bucket.assets.*.arn)
+  origin_domain_name   = var.website_enabled == true ? join("", aws_s3_bucket.website_enabled.*.bucket_regional_domain_name) : join("", aws_s3_bucket.assets.*.bucket_regional_domain_name)
+  s3_bucket_arn        = var.website_enabled == true ? join("", aws_s3_bucket.website_enabled.*.arn) : join("", aws_s3_bucket.assets.*.arn)
 
   tags = {
     Name        = var.resource_tag_name
@@ -13,7 +13,7 @@ locals {
 # S3: Access only via CloudFront distribution
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "assets" {
-  count  = var.assets && var.cloudfront_web_assets_module_enabled ? 1 : 0
+  count  = var.assets_enabled && var.cloudfront_web_assets_module_enabled ? 1 : 0
   bucket = var.domain_name
   acl    = "private"
 
@@ -21,7 +21,7 @@ resource "aws_s3_bucket" "assets" {
 }
 
 resource "aws_s3_bucket" "website" {
-  count  = var.website && var.cloudfront_web_assets_module_enabled ? 1 : 0
+  count  = var.website_enabled && var.cloudfront_web_assets_module_enabled ? 1 : 0
   bucket = var.domain_name
   acl    = "private"
 
@@ -49,13 +49,13 @@ data "aws_iam_policy_document" "origin" {
 }
 
 resource "aws_s3_bucket_policy" "website" {
-  count  = var.website && var.cloudfront_web_assets_module_enabled ? 1 : 0
+  count  = var.website_enabled && var.cloudfront_web_assets_module_enabled ? 1 : 0
   bucket = join("", aws_s3_bucket.website.*.id)
   policy = data.aws_iam_policy_document.origin.json
 }
 
 resource "aws_s3_bucket_policy" "assets" {
-  count  = var.assets && var.cloudfront_web_assets_module_enabled ? 1 : 0
+  count  = var.assets_enabled && var.cloudfront_web_assets_module_enabled ? 1 : 0
   bucket = join("", aws_s3_bucket.assets.*.id)
   policy = data.aws_iam_policy_document.origin.json
 }

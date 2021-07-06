@@ -32,17 +32,17 @@ variable "price_class" {
   default     = "PriceClass_100"
 }
 
-variable "website" {
+variable "website_enabled" {
   type    = bool
   default = false
 }
 
-variable "websocket" {
+variable "websocket_enabled" {
   type    = bool
   default = false
 }
 
-variable "assets" {
+variable "assets_enabled" {
   type    = bool
   default = false
 }
