@@ -31,8 +31,8 @@ module "website_s3" {
   domain_name           = var.domain_name
   acm_validation_method = var.acm_validation_method
 
-  website   = true
-  websocket = true
+  website_enabled   = true
+  websocket_enabled = true
 
   dynamic_custom_origin_config = [
     {
