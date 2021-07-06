@@ -20,9 +20,9 @@ The module can be switched on and off entirely with ``cloudfront_web_assets_modu
 
 
 
-```terraform
+```hcl
 module "website_s3" {
-  source = "../../services/cloudfront_s3"
+  source = "github.com/eezze/terraform-aws-cloudfront-web-assets?ref=v1.0"
 
   resource_tag_name = var.resource_tag_name
   namespace         = var.namespace
