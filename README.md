@@ -18,8 +18,6 @@ The module can be switched on and off entirely with ``cloudfront_web_assets_modu
 
 ## How to use:
 
-
-
 ```hcl
 module "website_s3" {
   source = "github.com/eezze/terraform-aws-cloudfront-web-assets?ref=v1.0"
@@ -28,11 +26,13 @@ module "website_s3" {
   namespace         = var.namespace
   region            = var.region
 
+  assets_domain_name    = var.assets_domain_name
   domain_name           = var.domain_name
   acm_validation_method = var.acm_validation_method
 
   website_enabled   = true
   websocket_enabled = true
+  assets_enabled    = true
 
   dynamic_custom_origin_config = [
     {
@@ -94,10 +94,22 @@ module "website_s3" {
       viewer_protocol_policy = "redirect-to-https"
     }
   ]
+
+  lambda_function_association_map = [
+    {
+      event_type   = "viewer-request"
+      lambda_arn   = module.lambda-at-edge.lambda_qualified_arn
+      include_body = false
+    }
+  ]
 }
 ```
 
 ## Changelog
+
+### v1.1
+  - Added ACM certificate create for sub-domains, and Route53 record creation.
+  - Merged ``assets_enabled`` create, added additional variable; ``assets_domain_name`` to allow for this. See updated example.
 
 ### v1.0
  - Initial release

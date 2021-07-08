@@ -23,7 +23,11 @@ variable "cloudfront_web_assets_module_enabled" {
 # Variables: S3 CloudFront
 # -----------------------------------------------------------------------------
 variable "domain_name" {
-  description = "Name of the domain and the S3 bucket"
+  description = "Name of the domain and the S3 bucket, e.g. example.com"
+}
+
+variable "assets_domain_name" {
+  description = "Name of the assets domain and the S3 bucket, required to be a sub-domain of domain_name. E.g. assets.example.com"
 }
 
 variable "price_class" {

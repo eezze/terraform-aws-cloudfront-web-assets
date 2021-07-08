@@ -3,6 +3,13 @@ locals {
   origin_domain_name   = var.website_enabled == true ? join("", aws_s3_bucket.website_enabled.*.bucket_regional_domain_name) : join("", aws_s3_bucket.assets.*.bucket_regional_domain_name)
   s3_bucket_arn        = var.website_enabled == true ? join("", aws_s3_bucket.website_enabled.*.arn) : join("", aws_s3_bucket.assets.*.arn)
 
+  # Returns all domain name options the certificate covers.
+  validation_domains = var.cloudfront_web_assets_module_enabled ? distinct(
+    [for k, v in aws_acm_certificate._[0].domain_validation_options : merge(
+      tomap(v), { domain_name = replace(v.domain_name, "*.", "") }
+    )]
+  ) : []
+
   tags = {
     Name        = var.resource_tag_name
     Environment = var.environment
@@ -14,7 +21,7 @@ locals {
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "assets" {
   count  = var.assets_enabled && var.cloudfront_web_assets_module_enabled ? 1 : 0
-  bucket = var.domain_name
+  bucket = var.assets_domain_name
   acl    = "private"
 
   tags = local.tags
@@ -63,24 +70,60 @@ resource "aws_s3_bucket_policy" "assets" {
 # -----------------------------------------------------------------------------
 # ACM Certificates
 # -----------------------------------------------------------------------------
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"
+}
 
+# Our design assumes route53 zones have been created.
+data "aws_route53_zone" "_" {
+  count = var.cloudfront_web_assets_module_enabled ? 1 : 0
+
+  name         = var.domain_name
+  private_zone = false
+}
+
+# Here the design assumption is that the ACM certificate covers all the sub-domains and the assets_domain_name is a sub-domain of domain_name variable.
 resource "aws_acm_certificate" "_" {
   count  = var.cloudfront_web_assets_module_enabled ? 1 : 0
 
   domain_name       = var.domain_name
   validation_method = var.acm_validation_method
+  subject_alternative_names = [ "*.${var.domain_name}" ]
 
   tags = local.tags
+
+  # ensure ACM certificate is created in the us-east-1 region.
+  provider = aws.us-east-1
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
+resource "aws_route53_record" "validation" {
+  count = var.cloudfront_web_assets_module_enabled && var.acm_validation_method == "DNS" ? 1 : 0
+
+  zone_id = var.zone_id
+  name    = element(local.validation_domains, count.index)["resource_record_name"]
+  type    = element(local.validation_domains, count.index)["resource_record_type"]
+  ttl     = 60
+
+  records = [
+    element(local.validation_domains, count.index)["resource_record_value"]
+  ]
+
+  allow_overwrite = true
+
+  depends_on = [aws_acm_certificate._]
+}
+
 resource "aws_acm_certificate_validation" "_" {
   count  = var.cloudfront_web_assets_module_enabled ? 1 : 0
   
   certificate_arn = one(aws_acm_certificate._.*.arn)
+
+  wait_for_validation = false
 }
 
 # -----------------------------------------------------------------------------
