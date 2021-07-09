@@ -1,5 +1,7 @@
 # Terraform AWS CloudFront for Web and Assets Storage on AWS S3
 
+[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.svg)](https://open.vscode.dev/eezze/terraform-aws-cloudfront-web-assets)
+
 ## About:
 
 Deploys an AWS CloudFront distribution that supports two domains and optionally an AWS API Gateway Websocket domain;
@@ -95,6 +97,7 @@ module "website_s3" {
     }
   ]
 
+  # example how to apply custom authorization to assets domain.
   lambda_function_association_map = [
     {
       event_type   = "viewer-request"
